@@ -7,16 +7,19 @@ from kivy.graphics import Color, Rectangle
 from kivy.uix.popup import Popup
 from kivy.uix.anchorlayout import AnchorLayout
 
-class Jogo_da_Idosa(App):
+
+class JogoDaVelhaApp(App):
     def build(self):
         self.title = 'Jogo da Velha'
-        self.grid = GridLayout(cols=3, spacing=10, padding=10)
-        self.botoes = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
-        self.jogador = 'X'
+        self.tabuleiro = Tabuleiro()
+        self.jogador = Jogador('X')
         self.game_over = False
         self.movimentos = 0
-        self.placar_x = 0
-        self.placar_o = 0
+
+        layout_jogo = BoxLayout(orientation='vertical')
+
+        self.grid = GridLayout(cols=3, spacing=10, padding=10)
+        self.botoes = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]  # Representa o tabuleiro
 
         for row in range(3):
             for col in range(3):
@@ -26,27 +29,25 @@ class Jogo_da_Idosa(App):
                 self.grid.add_widget(button)
                 self.botoes[row][col] = button
 
+        layout_jogo.add_widget(self.grid)
+
         botao_reset = Button(text='Reset', size_hint=(0.25, 0.3), font_size=25, color=(0, 0, 0, 1))
         botao_reset.bind(on_press=self.reset_game)
-
+        
         placar_x = Label(text='Jogador X: 0', size_hint=(0.5, 0.1), pos_hint={'top': 0.5}, font_size=20, color=(0, 0, 0, 1))
         placar_o = Label(text='Jogador O: 0', size_hint=(0.5, 0.1), pos_hint={'top': 0.5}, font_size=20, color=(0, 0, 0, 1))
 
         layout_placar = BoxLayout(orientation='horizontal', size_hint=(1, 0.1))
         layout_placar.add_widget(placar_x)
         layout_placar.add_widget(placar_o)
-
-        layout_jogo = BoxLayout(orientation='vertical')
-        layout_jogo.add_widget(self.grid)
+        layout_jogo.add_widget(layout_placar)
 
         layout_anchor = AnchorLayout(anchor_x='center', anchor_y='center', size_hint=(1, 0.25))
         layout_anchor.add_widget(botao_reset)
-
-        layout_jogo.add_widget(layout_placar)
         layout_jogo.add_widget(layout_anchor)
 
         with layout_jogo.canvas.before:
-            Color(0.6, 0.8, 0.8, 1)
+            Color(0.6, 0.8, 0.8, 1)  # Define a cor de fundo do layout
             self.rect = Rectangle(pos=layout_jogo.pos, size=layout_jogo.size)
 
         layout_jogo.bind(pos=self.atualiza_retangulo, size=self.atualiza_retangulo)
@@ -77,7 +78,10 @@ class Jogo_da_Idosa(App):
         return popup
 
     def set_jogador_inicial(self, jogador, popup):
-        self.jogador = jogador
+        if self.jogador is None:
+            self.jogador = Jogador(jogador)
+        else:
+            self.jogador.identificador = jogador
         popup.dismiss()
 
     def on_start(self):
@@ -89,13 +93,13 @@ class Jogo_da_Idosa(App):
 
     def click_botao(self, button):
         if button.text == '' and not self.game_over:
-            button.text = self.jogador
+            button.text = self.jogador.identificador
             row, col = self.encontra_posicao_botao(button)
-            self.botoes[row][col] = button
+            self.tabuleiro.marcar_posicao(row, col, self.jogador.identificador)
             self.movimentos += 1
             self.verificar_ganhador()
             self.quem_comeca()
-            self.atualiza_cor_botao(button)
+            self.atualiza_cor_botao(button)  # Atualiza o estilo do botão após cada jogada
 
     def encontra_posicao_botao(self, button):
         for row in range(3):
@@ -104,26 +108,12 @@ class Jogo_da_Idosa(App):
                     return row, col
 
     def quem_comeca(self):
-        if self.jogador == 'X':
-            self.jogador = 'O'
-        else:
-            self.jogador = 'X'
+        self.jogador.trocar_jogador()
 
     def verificar_ganhador(self):
-        for row in range(3):
-            if self.botoes[row][0].text == self.botoes[row][1].text == self.botoes[row][2].text != '':
-                self.declarar_ganhador(self.botoes[row][0].text)
-
-        for col in range(3):
-            if self.botoes[0][col].text == self.botoes[1][col].text == self.botoes[2][col].text != '':
-                self.declarar_ganhador(self.botoes[0][col].text)
-
-        if self.botoes[0][0].text == self.botoes[1][1].text == self.botoes[2][2].text != '':
-            self.declarar_ganhador(self.botoes[0][0].text)
-        elif self.botoes[0][2].text == self.botoes[1][1].text == self.botoes[2][0].text != '':
-            self.declarar_ganhador(self.botoes[0][2].text)
-
-        if self.movimentos == 9 and not self.game_over:
+        if self.tabuleiro.verificar_vitoria(self.jogador.identificador):
+            self.declarar_ganhador(self.jogador.identificador)
+        elif self.movimentos == 9 and not self.game_over:
             self.empate()
 
     def declarar_ganhador(self, winner):
@@ -132,12 +122,12 @@ class Jogo_da_Idosa(App):
         self.desabilitar_botoes()
 
         if winner == 'X':
-            self.placar_x += 1
+            self.jogador.incrementar_placar()
         elif winner == 'O':
-            self.placar_o += 1
+            self.jogador.incrementar_placar()
 
-        self.label_x.text = f'Jogador X: {self.placar_x}'
-        self.label_o.text = f'Jogador O: {self.placar_o}'
+        self.label_x.text = f'Jogador X: {self.jogador.placar_x}'
+        self.label_o.text = f'Jogador O: {self.jogador.placar_o}'
 
     def empate(self):
         self.game_over = True
@@ -154,11 +144,12 @@ class Jogo_da_Idosa(App):
         self.movimentos = 0
         self.title = 'Jogo da Velha'
 
+        self.tabuleiro.resetar()
         for row in range(3):
             for col in range(3):
                 self.botoes[row][col].text = ''
                 self.botoes[row][col].disabled = False
-                self.atualiza_cor_botao(self.botoes[row][col])
+                self.atualiza_cor_botao(self.botoes[row][col])  # Atualiza o estilo de cada botão
         self.popup_inicial.open()
 
     def atualiza_cor_botao(self, button):
@@ -178,5 +169,55 @@ class Jogo_da_Idosa(App):
     def on_resume(self):
         self.reset_game(None)
 
+
+class Tabuleiro:
+    def __init__(self):
+        self.grid = [['', '', ''], ['', '', ''], ['', '', '']]
+
+    def marcar_posicao(self, row, col, identificador):
+        self.grid[row][col] = identificador
+
+    def verificar_vitoria(self, identificador):
+        for row in range(3):
+            # Verificar linhas
+            if self.grid[row][0] == self.grid[row][1] == self.grid[row][2] == identificador != '':
+                return True
+
+        for col in range(3):
+            # Verificar colunas
+            if self.grid[0][col] == self.grid[1][col] == self.grid[2][col] == identificador != '':
+                return True
+
+        # Verificar diagonais
+        if self.grid[0][0] == self.grid[1][1] == self.grid[2][2] == identificador != '':
+            return True
+        elif self.grid[0][2] == self.grid[1][1] == self.grid[2][0] == identificador != '':
+            return True
+
+        return False
+
+    def resetar(self):
+        self.grid = [['', '', ''], ['', '', ''], ['', '', '']]
+
+
+class Jogador:
+    def __init__(self, identificador):
+        self.identificador = identificador
+        self.placar_x = 0
+        self.placar_o = 0
+
+    def trocar_jogador(self):
+        if self.identificador == 'X':
+            self.identificador = 'O'
+        else:
+            self.identificador = 'X'
+
+    def incrementar_placar(self):
+        if self.identificador == 'X':
+            self.placar_x += 1
+        elif self.identificador == 'O':
+            self.placar_o += 1
+
+
 if __name__ == '__main__':
-    Jogo_da_Idosa().run()
+    JogoDaVelhaApp().run()
