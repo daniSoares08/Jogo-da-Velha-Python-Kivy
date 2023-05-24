@@ -71,6 +71,10 @@ class Jogo_da_Idosa(App):
         
         # Retornando o layout do jogo completo
         return layout_jogo
+    
+    def on_start(self):
+    # Este método é chamado automaticamente quando o aplicativo é iniciado
+        self.start_jogo()
 
     # Criação do popup que será usado para o jogador escolher quem começa jogando.
     def popup_escolha_x_o(self):
