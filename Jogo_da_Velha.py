@@ -7,7 +7,7 @@ from kivy.graphics import Color, Rectangle
 from kivy.uix.popup import Popup
 from kivy.uix.anchorlayout import AnchorLayout
 
-class Jogo_da_Idosa(App):
+class JogoDaVelha(App):
     def build(self):
         self.title = 'Jogo da Velha'
         self.grid = GridLayout(cols=3, spacing=10, padding=10)
@@ -55,8 +55,12 @@ class Jogo_da_Idosa(App):
         self.label_o = placar_o
 
         self.popup_inicial = self.popup_escolha_x_o()
-
+        
         return layout_jogo
+
+    def on_start(self):
+        # Este método é chamado automaticamente quando o aplicativo é iniciado
+        self.start_jogo()
 
     def popup_escolha_x_o(self):
         box = BoxLayout(orientation='vertical')
@@ -80,7 +84,7 @@ class Jogo_da_Idosa(App):
         self.jogador = jogador
         popup.dismiss()
 
-    def on_start(self):
+    def start_jogo(self):
         self.popup_inicial.open()
 
     def atualiza_retangulo(self, instance, value):
@@ -126,14 +130,14 @@ class Jogo_da_Idosa(App):
         if self.movimentos == 9 and not self.game_over:
             self.empate()
 
-    def declarar_ganhador(self, winner):
+    def declarar_ganhador(self, ganhador):
         self.game_over = True
-        self.title = f'{winner} venceu!'
+        self.title = f'{ganhador} venceu!'
         self.desabilitar_botoes()
 
-        if winner == 'X':
+        if ganhador == 'X':
             self.placar_x += 1
-        elif winner == 'O':
+        elif ganhador == 'O':
             self.placar_o += 1
 
         self.label_x.text = f'Jogador X: {self.placar_x}'
@@ -169,14 +173,14 @@ class Jogo_da_Idosa(App):
         else:
             button.background_color = (1, 1, 1, 1)
 
-    def on_stop(self):
+    def parar(self):
         self.reset_game(None)
 
-    def on_pause(self):
+    def pause(self):
         return True
 
-    def on_resume(self):
+    def voltar(self):
         self.reset_game(None)
 
 if __name__ == '__main__':
-    Jogo_da_Idosa().run()
+    JogoDaVelha().run()
