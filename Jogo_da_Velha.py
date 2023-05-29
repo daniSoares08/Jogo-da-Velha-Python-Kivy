@@ -6,6 +6,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.graphics import Color, Rectangle
 from kivy.uix.popup import Popup
 from kivy.uix.anchorlayout import AnchorLayout
+from kivy.core.audio import SoundLoader
 
 class JogoDaVelha(App):
     def build(self):
@@ -17,6 +18,13 @@ class JogoDaVelha(App):
         self.movimentos = 0
         self.placar_x = 0
         self.placar_o = 0
+
+        self.background_music = SoundLoader.load("C:/Users/campo/Documents/Projetos Python/CSBA/Jogo da velha\MusicaDeElevador.ogg")
+        self.victory_sound = SoundLoader.load("C:/Users/campo/Documents/Projetos Python/CSBA/Jogo da velha/VITORIA.ogg")
+
+        if self.background_music:
+            self.background_music.loop = True  # Make the music loop
+            self.background_music.play()
 
         for row in range(3):
             for col in range(3):
@@ -59,7 +67,6 @@ class JogoDaVelha(App):
         return layout_jogo
 
     def on_start(self):
-        # Este método é chamado automaticamente quando o aplicativo é iniciado
         self.start_jogo()
 
     def popup_escolha_x_o(self):
@@ -140,6 +147,9 @@ class JogoDaVelha(App):
         elif ganhador == 'O':
             self.placar_o += 1
 
+        if self.victory_sound:
+            self.victory_sound.play()
+
         self.label_x.text = f'Jogador X: {self.placar_x}'
         self.label_o.text = f'Jogador O: {self.placar_o}'
 
@@ -175,6 +185,8 @@ class JogoDaVelha(App):
 
     def parar(self):
         self.reset_game(None)
+        if self.background_music:
+            self.background_music.stop()
 
     def pause(self):
         return True
